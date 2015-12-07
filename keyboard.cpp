@@ -325,7 +325,7 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
         now--;
     }
     Square rcolor = Mboard[tot][0].a;
-    int need = 0;
+    int need = 0,Len=rcolor.d-rcolor.u;
     for (int i = 0; i < Mboard[tot].size(); i++)
         if (Mboard[tot][i].kind != 4) need++;
     need /= 2;
@@ -337,24 +337,27 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
         }
     while (now >= 0)
     {
-        while (mSquares[now].size() == 1)
+        if (now>=0&&mSquares[now].size() == 1)
         {
             Mboard[++tot].push_back((keyboard){mSquares[now][0], 4});
             now--;
         }
-        bool getout = 0;
+        if (now<0) break;
         Square nowcolor = Mboard[tot][0].a;
         need = 0;
         for (int i = 0; i < mSquares[now].size(); i++)
             if (get_kind(image, mSquares[now][i]) != 4) need++;
+		if (need==0) break;
         need /= 2;
+        bool have=0;
         for (int i = 0; i < mSquares[now].size(); i++)
             if (get_kind(image, mSquares[now][i]) != 4)
             {
                 need--;
-                if (need == 0) nowcolor = mSquares[now][i];
+                if (need == 0) {nowcolor = mSquares[now][i];have=1;}
             }
-        if (!samecolor(image, rcolor, nowcolor)) break;
+        if (!have) break;
+        if (have&&!samecolor(image, rcolor, nowcolor)) break;
         tot++;
         for (int i = 0; i < mSquares[now].size(); i++)
             Mboard[tot].push_back((keyboard){mSquares[now][i], get_kind(image, mSquares[now][i])});
