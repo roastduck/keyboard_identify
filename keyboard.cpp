@@ -366,6 +366,20 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
         now--;
     }
 	while (Mboard.back().size()==0) Mboard.pop_back();
+    
+	std::vector<Pixel> Most;
+	for (int i=0;i<Mboard.size();i++)
+    	for (int j=0;j<Mboard[i].size();j++)
+    		if (Mboard[i][j].kind!=4) 
+				Most.push_back(get_most(image,Mboard[i][j].a));
+    for (int i=0;i<Mboard.size();i++)
+    	for (int j=0;j<Mboard[i].size();j++)
+    		if (Mboard[i][j].kind==4)
+    		{
+    		  Pixel nowcolor=get_most(image,Mboard[i][j].a);
+    		  for (int k=0;k<Most.size();k++)
+    		  	if (nowcolor==Most[k]) Mboard[i][j].kind=3;
+			}
     return Mboard;
 }
 
