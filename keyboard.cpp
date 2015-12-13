@@ -476,9 +476,10 @@ Vec2D<Pixel> drawSquares(const Vec2D<Pixel> &image, const Squares &mSquares);
 Vec2D<Pixel> drawMboard(const Vec2D<Pixel> &image, const Keyboards &Mboard);
 #endif
 
-int main()
+int main(int argc, char **argv)
 {
-	Files mFiles = search_images();
+	std::string path(argc>1 ? argv[1] : ".");
+	Files mFiles = search_images(path);
 	Results mResults;
 	for (Files::iterator i=mFiles.begin(); i!=mFiles.end(); i++)
 	{
@@ -520,15 +521,18 @@ int main()
 				};
 				mRows.push_back(ret);
 			}
+		std::clog << "Analyzed " << i->fullpath << std::endl;
 	}
 	for (Results::iterator i=mResults.begin(); i!=mResults.end(); i++)
 		for (std::map<std::string,Result>::iterator j=i->second.begin(); j!=i->second.end(); j++)
 		{
 			YAML::Emitter em;
 			em << j->second;
-			std::ofstream os((i->first+"/"+j->first+"/layout_"+j->first+".yaml").c_str());
+			std::string outputFile = path+"/"+i->first+"/"+j->first+"/layout_"+j->first+".yaml";
+			std::ofstream os(outputFile.c_str());
 			os << em.c_str();
 			os.close();
+			std::clog << "Generated " << outputFile << std::endl;
 		}
     //savePNG(drawSquares(image,mSquares),"output.png");
     //savePNG(drawMboard(image, Mboard), "output.png");
