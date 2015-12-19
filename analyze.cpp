@@ -1,66 +1,18 @@
-#include <cmath>
-#include <cstdio>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include "lodepng.h"
-#include "yaml-cpp/yaml.h"
-#include "boost/filesystem.hpp"
+#include "analyze.h"
 
 typedef std::pair<int, double> PID;
 
 template <class T1, class T2>
-inline bool cmp_first(const std::pair<T1, T2> &a, const std::pair<T1, T2> &b)
+static inline bool cmp_first(const std::pair<T1, T2> &a, const std::pair<T1, T2> &b)
 {
     return a.first < b.first;
 }
 
 template <class T1, class T2>
-inline bool cmp_second(const std::pair<T1, T2> &a, const std::pair<T1, T2> &b)
+static inline bool cmp_second(const std::pair<T1, T2> &a, const std::pair<T1, T2> &b)
 {
     return a.second < b.second;
 }
-
-struct Pixel // Ignore alpha
-{
-    int r, g, b;
-
-    Pixel() {}
-    Pixel(int _r, int _g, int _b) :
-        r(_r), g(_g), b(_b) {}
-    Pixel(const Pixel &from) :
-        r(from.r), g(from.g), b(from.b) {}
-};
-
-inline bool operator==(const Pixel &a, const Pixel &b)
-{
-    //return a.r==b.r && a.g==b.g && a.b==b.b;
-    return abs(a.r - b.r) + abs(a.g - b.g) + abs(a.b - b.b) < 20;
-}
-
-inline bool operator!=(const Pixel &a, const Pixel &b)
-{
-    return ! (a == b);
-}
-
-template <class T>
-class Vec2D : public std::vector<T>
-{
-    size_t width, height;
-
-public:
-    size_t getWidth() const { return width; }
-    size_t getHeight() const { return height; }
-
-    T &at(size_t x, size_t y) { return std::vector<T>::at(x * width + y); }
-    const T &at(size_t x, size_t y) const { return std::vector<T>::at(x * width + y); }
-
-    Vec2D(size_t _width, size_t _height) :
-        std::vector<T>(_width * _height), width(_width), height(_height) {}
-};
 
 Vec2D<Pixel> loadPNG(std::string filename)
 {
@@ -179,23 +131,12 @@ public:
     }
 };
 
-struct Square
-{
-    int l, r, u, d;
-
-    Square() {}
-    Square(int _l, int _r, int _u, int _d)
-        : l(_l), r(_r), u(_u), d(_d) {}
-};
-
-typedef std::vector< std::vector<Square> > Squares;
-
-inline double modify_diff_row(double x)
+static inline double modify_diff_row(double x)
 {
     return pow(x, 2);
 }
 
-inline double modify_diff_col(double x)
+static inline double modify_diff_col(double x)
 {
     return pow(x, 3);
 }
@@ -232,15 +173,7 @@ Squares find_squares(const Vec2D<Pixel> &image)
     return ret;
 }
 
-struct keyboard
-{
-    Square a;
-    int kind; //1=b 2=w 3=g 4=s
-};
-
-typedef std::vector< std::vector<keyboard> > Keyboards;
-
-Pixel get_most(const Vec2D<Pixel> &image, const Square &a)
+static Pixel get_most(const Vec2D<Pixel> &image, const Square &a)
 {
     int sum[300], Max = 0, R;
     memset(sum, 0, sizeof(sum));
@@ -288,7 +221,7 @@ Pixel get_most(const Vec2D<Pixel> &image, const Square &a)
     return (Pixel) { R, G, B };
 }
 
-int get_kind(const Vec2D<Pixel> &image, const Square &a)
+static int get_kind(const Vec2D<Pixel> &image, const Square &a)
 {
     Pixel most = get_most(image, a);
     int tot = 0, all = 0;
@@ -304,7 +237,7 @@ int get_kind(const Vec2D<Pixel> &image, const Square &a)
     return 1;
 }
 
-bool samecolor(const Vec2D<Pixel> &image, const Square &a, const Square &b)
+static inline bool samecolor(const Vec2D<Pixel> &image, const Square &a, const Square &b)
 {
     Pixel mosta = get_most(image, a), mostb = get_most(image, b);
     return mosta == mostb;
@@ -349,7 +282,7 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
         need = 0;
         for (int i = 0; i < mSquares[now].size(); i++)
             if (get_kind(image, mSquares[now][i]) != 4) need++;
-		if (need==0) break;
+        if (need==0) break;
         need /= 2;
         bool have=0;
         for (int i = 0; i < mSquares[now].size(); i++)
@@ -365,192 +298,22 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
             Mboard[tot].push_back((keyboard){mSquares[now][i], get_kind(image, mSquares[now][i])});
         now--;
     }
-	while (Mboard.back().size()==0) Mboard.pop_back();
-    
-	std::vector<Pixel> Most;
-	for (int i=0;i<Mboard.size();i++)
-    	for (int j=0;j<Mboard[i].size();j++)
-    		if (Mboard[i][j].kind!=4) 
-				Most.push_back(get_most(image,Mboard[i][j].a));
+    while (Mboard.back().size()==0) Mboard.pop_back();
+
+    std::vector<Pixel> Most;
     for (int i=0;i<Mboard.size();i++)
-    	for (int j=0;j<Mboard[i].size();j++)
-    		if (Mboard[i][j].kind==4)
-    		{
-    		  Pixel nowcolor=get_most(image,Mboard[i][j].a);
-    		  for (int k=0;k<Most.size();k++)
-    		  	if (nowcolor==Most[k]) Mboard[i][j].kind=3;
-			}
+        for (int j=0;j<Mboard[i].size();j++)
+            if (Mboard[i][j].kind!=4) 
+                Most.push_back(get_most(image,Mboard[i][j].a));
+    for (int i=0;i<Mboard.size();i++)
+        for (int j=0;j<Mboard[i].size();j++)
+            if (Mboard[i][j].kind==4)
+            {
+                Pixel nowcolor=get_most(image,Mboard[i][j].a);
+                for (int k=0;k<Most.size();k++)
+                    if (nowcolor==Most[k]) Mboard[i][j].kind=3;
+            }
     return Mboard;
-}
-
-struct Image
-{
-	std::vector<std::string> path; // from leaf to curdir
-	std::string fullpath, layout, category;
-};
-typedef std::vector<Image> Files;
-
-inline std::vector<std::string> split(std::string s)
-{
-	std::vector<std::string> ret(1);
-	for (std::string::iterator i=s.begin(); i!=s.end(); i++)
-		if ((*i=='_' || *i=='.') && !ret.back().empty())
-			ret.push_back("");
-		else
-			ret.back() += *i;
-	if (ret.back().empty()) ret.pop_back();
-	return ret;
-}
-
-Files search_images(boost::filesystem::path path = boost::filesystem::current_path())
-{
-	using namespace boost::filesystem;
-	if (!exists(path)) return Files();
-	Files ret;
-	for (directory_iterator i(path); i!=directory_iterator(); i++)
-	{
-		if (is_directory(i->status()))
-		{
-			Files deeper = search_images(i->path());
-			for (Files::iterator j=deeper.begin(); j!=deeper.end(); j++)
-			{
-				ret.push_back(*j);
-				ret.back().path.push_back(i->path().filename().string());
-			} 
-		} else
-		{
-			std::vector<std::string> part = split(i->path().filename().string());
-			if (part.back() != "png" || part.size() != 3) continue;
-			Image mImage;
-			mImage.layout = part[0];
-			mImage.category = part[1];
-			mImage.fullpath = i->path().string();
-			ret.push_back(mImage);
-		}
-	}
-	return ret;
-}
-
-struct FrameBody { int x, y, w, h; };
-struct Frame { FrameBody body; };
-typedef std::vector<Frame> Keys;
-struct Row { FrameBody frame; Keys keys; };
-typedef std::vector<Row> RowsBody;
-struct Rows { RowsBody body; };
-typedef std::map< std::string, std::map< std::string, Rows> > Layouts;
-struct Result { int width, height; Layouts layouts; };
-typedef std::map< std::string, std::map< std::string, Result> > Results;
-
-YAML::Emitter &operator<<(YAML::Emitter &os, const FrameBody &mFrame)
-{
-	return os << YAML::Flow << YAML::BeginSeq << mFrame.x << mFrame.y << mFrame.w << mFrame.h << YAML::EndSeq;
-}
-
-YAML::Emitter &operator<<(YAML::Emitter &os, const Frame &mFrame)
-{
-	return os << YAML::BeginMap << YAML::Key << "frame" << YAML::Value << mFrame.body << YAML::EndMap;
-}
-
-YAML::Emitter &operator<<(YAML::Emitter &os, const Row &mRow)
-{
-	os << YAML::BeginMap;
-	os << YAML::Key << "frame" << YAML::Value << mRow.frame;
-	os << YAML::Key << "keys" << YAML::Value << mRow.keys;
-	os << YAML::EndMap;
-	return os;
-}
-
-YAML::Emitter &operator<<(YAML::Emitter &os, const Rows &mRows)
-{
-	return os << YAML::BeginMap << YAML::Key << "rows" << YAML::Value << mRows.body << YAML::EndMap;
-}
-
-YAML::Emitter &operator<<(YAML::Emitter &os, const Result &mResult)
-{
-	os << YAML::BeginMap;
-	os << YAML::Key << "width" << YAML::Value << mResult.width;
-	os << YAML::Key << "height" << YAML::Value << mResult.height;
-	os << YAML::Key << "layouts" << YAML::Value << mResult.layouts;
-	os << YAML::EndMap;
-	return os;
-}
-
-inline int str_to_int(const std::string &s)
-{
-	std::istringstream ss(s);
-	int ret;
-	ss >> ret;
-	return ret;
-}
-
-#ifdef DEBUG
-void printAll(const Vec2D<Pixel> &image);
-void savePNG(const Vec2D<Pixel> &image, const char *filename);
-Vec2D<Pixel> drawSquares(const Vec2D<Pixel> &image, const Squares &mSquares);
-Vec2D<Pixel> drawMboard(const Vec2D<Pixel> &image, const Keyboards &Mboard);
-#endif
-
-int main(int argc, char **argv)
-{
-	std::string path(argc>1 ? argv[1] : ".");
-	Files mFiles = search_images(path);
-	Results mResults;
-	for (Files::iterator i=mFiles.begin(); i!=mFiles.end(); i++)
-	{
-		Vec2D<Pixel> image = loadPNG(i->fullpath);
-		Squares mSquares = find_squares(image);
-		Keyboards Mboard = get_keyboard(image, mSquares);
-		double point_pixel = (double)str_to_int(i->path.front()) / image.getWidth();
-
-		Result &mResult = mResults[i->path.back()][i->path.front()];
-		RowsBody &mRows = mResult.layouts[i->layout][i->category].body;
-		
-		mResult.width = str_to_int(i->path.front());
-		mResult.height = point_pixel*(image.getHeight() - Mboard.back().front().a.u + 1);
-
-		for (Keyboards::reverse_iterator j=Mboard.rbegin(); j!=Mboard.rend(); j++)
-			if (!(j->size()==1 && j->front().kind==4))
-			{
-				Row ret;
-				int leftmost = -1, rightmost = -1;
-				for (std::vector<keyboard>::iterator k=j->begin(); k!=j->end(); k++)
-					if (k->kind != 4)
-					{
-						if (leftmost == -1) leftmost = k->a.l;
-						rightmost = k->a.r;
-						
-						ret.keys.push_back(Frame());
-						ret.keys.back().body = (FrameBody) {
-							int(point_pixel*(k->a.l - leftmost)),
-							0,
-							int(point_pixel*(k->a.r - k->a.l + 1)),
-							int(point_pixel*(k->a.d - k->a.u + 1 + 1)) // plus one to match the example
-						};
-					}
-				ret.frame = (FrameBody) {
-					int(point_pixel*leftmost),
-					int(point_pixel*(j->front().a.u - Mboard.back().front().a.u)),
-					int(point_pixel*(rightmost - leftmost + 1)),
-					int(point_pixel*(j->front().a.d - j->front().a.u + 1 + 1)) //plus one to match the example
-				};
-				mRows.push_back(ret);
-			}
-		std::clog << "Analyzed " << i->fullpath << std::endl;
-	}
-	for (Results::iterator i=mResults.begin(); i!=mResults.end(); i++)
-		for (std::map<std::string,Result>::iterator j=i->second.begin(); j!=i->second.end(); j++)
-		{
-			YAML::Emitter em;
-			em << j->second;
-			std::string outputFile = path+"/"+i->first+"/"+j->first+"/layout_"+j->first+".yaml";
-			std::ofstream os(outputFile.c_str());
-			os << em.c_str();
-			os.close();
-			std::clog << "Generated " << outputFile << std::endl;
-		}
-    //savePNG(drawSquares(image,mSquares),"output.png");
-    //savePNG(drawMboard(image, Mboard), "output.png");
-    return 0;
 }
 
 #ifdef DEBUG
@@ -572,6 +335,7 @@ void savePNG(const Vec2D<Pixel> &image, const char *filename)
         raw[i * 4] = image[i].r, raw[i * 4 + 1] = image[i].g, raw[i * 4 + 2] = image[i].b, raw[i * 4 + 3] = 255;
     lodepng::encode(filename, raw, image.getWidth(), image.getHeight());
 }
+
 Vec2D<Pixel> drawSquares(const Vec2D<Pixel> &image, const Squares &mSquares)
 {
     Vec2D<Pixel> ret(image);
@@ -586,6 +350,7 @@ Vec2D<Pixel> drawSquares(const Vec2D<Pixel> &image, const Squares &mSquares)
         }
     return ret;
 }
+
 Vec2D<Pixel> drawMboard(const Vec2D<Pixel> &image, const Keyboards &Mboard)
 {
     Vec2D<Pixel> ret(image);
@@ -624,4 +389,5 @@ Vec2D<Pixel> drawMboard(const Vec2D<Pixel> &image, const Keyboards &Mboard)
         }
     return ret;
 }
+
 #endif
