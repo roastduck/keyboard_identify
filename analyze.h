@@ -56,6 +56,9 @@ struct Square
     Square() {}
     Square(int _l, int _r, int _u, int _d)
         : l(_l), r(_r), u(_u), d(_d) {}
+
+	int getHeight() { return d-u+1; }
+	int getWidth() { return r-l+1; }
 };
 
 typedef std::vector< std::vector<Square> > Squares;

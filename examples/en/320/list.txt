@@ -1,0 +1,15 @@
+email_#+=.png
+email_123.png
+email_abc.png
+normal_#+=.png
+normal_123.png
+normal_abc.png
+number_pad.png
+search_#+=.png
+search_123.png
+search_abc.png
+twitter_#+=.png
+twitter_123.png
+twitter_abc.png
+url_#+=.png
+url_123.png

@@ -3,10 +3,7 @@ Keyboard Identify
 
 Given some iOS keyboard screenshots (PNG), output the positions of the keys.
 
-Dependencies
---------
-- boost-filesystem
-- cpp-yaml
+Output : Plain text
 
 Compile
 --------
@@ -14,6 +11,4 @@ run `make` to compile into keyboard
 
 Run
 --------
-run `./keyboard` to parse folders in current directory.
-
-run `./keyboard <path>` to parse folders in _path_, for example, `./keyboard examples`.
+run `./keyboard` to parse files listed in _list.txt_ in current directory.
