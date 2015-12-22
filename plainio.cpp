@@ -46,17 +46,23 @@ int main()
 			outfs << height;
 			if (i+1==Mboard.rend()) outfs << std::endl; else outfs << ' ';
 		}
+		for (Keyboards::iterator i=Mboard.begin(); i!=Mboard.end(); i++)
+			if (i->size() == 1)
+				i->clear();
 		for (Keyboards::reverse_iterator i=Mboard.rbegin(); i!=Mboard.rend(); i++)
 		{
 			outfs << i->size();
 			if (i+1==Mboard.rend()) outfs << std::endl; else outfs << ' ';
 		}
 		for (Keyboards::reverse_iterator i=Mboard.rbegin(); i!=Mboard.rend(); i++)
+		{
 			for (std::vector<keyboard>::iterator j=i->begin(); j!=i->end(); j++)
 			{
 				outfs << j->a.getWidth() << ' ' << colorname(j->kind);
-				if (j+1==i->end()) outfs << std::endl; else outfs << ' ';
+				if (j+1!=i->end()) outfs << ' ';
 			}
+			outfs << std::endl;
+		}
 		outfs.close();
 		//std::clog << "Generated " << PNGfile << std::endl;
 	}
