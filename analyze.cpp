@@ -237,6 +237,21 @@ static int get_kind(const Vec2D<Pixel> &image, const Square &a)
     return 1;
 }
 
+int get_boardkind(const Vec2D<Pixel> &image, const Square &a)
+{
+    Pixel most = get_most(image, a);
+    int tot = 0, all = 0;
+    for (int i = a.u + 2; i <= a.d - 2; i++)
+        for (int j = a.l + 2; j <= a.r - 2; j++)
+        {
+            if (most == image.at(i, j)) tot++;
+            all++;
+        }
+    if (abs(most.r - most.g) <= 10 && abs(most.r - most.b) <= 10 && abs(most.b - most.g) <= 10 && most.r >= 230) return 2;
+    if (abs(most.r - most.g) <= 40 && abs(most.r - most.b) <= 40 && abs(most.b - most.g) <= 40) return 3;
+    return 1;
+}
+
 static inline bool samecolor(const Vec2D<Pixel> &image, const Square &a, const Square &b)
 {
     Pixel mosta = get_most(image, a), mostb = get_most(image, b);
@@ -311,7 +326,7 @@ Keyboards get_keyboard(const Vec2D<Pixel> &image, const Squares &mSquares)
             {
                 Pixel nowcolor=get_most(image,Mboard[i][j].a);
                 for (int k=0;k<Most.size();k++)
-                    if (nowcolor==Most[k]) Mboard[i][j].kind=3;
+                    if (nowcolor==Most[k]) Mboard[i][j].kind=get_boardkind(image,Mboard[i][j].a);
             }
     return Mboard;
 }
