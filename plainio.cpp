@@ -38,13 +38,12 @@ int main()
 		Keyboards Mboard = get_keyboard(image, mSquares);
 
 		std::ofstream outfs(outputfile(PNGfile).c_str());
-		outfs << Mboard.size() << std::endl;
+		outfs << Mboard.size() << ' ';
 		for (Keyboards::reverse_iterator i=Mboard.rbegin(); i!=Mboard.rend(); i++)
 		{
 			int height = i->front().a.getHeight();
 			if (height&1) height += i->size()==1 ? -1 : 1;
-			outfs << height;
-			if (i+1==Mboard.rend()) outfs << std::endl; else outfs << ' ';
+			outfs << height << ' ';
 		}
 		for (Keyboards::iterator i=Mboard.begin(); i!=Mboard.end(); i++)
 			if (i->size() == 1)
